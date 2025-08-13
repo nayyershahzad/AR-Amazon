@@ -1,0 +1,80 @@
+.App {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Navigation */
+.app-nav {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-brand h1 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.nav-subtitle {
+  color: #6c757d;
+  font-size: 0.9rem;
+  display: block;
+  margin-top: 2px;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.nav-tab {
+  padding: 12px 20px;
+  border: none;
+  background: #f8f9fa;
+  color: #495057;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.nav-tab:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.nav-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Content Area */
+.app-content {
+  min-height: calc(100vh - 80px);
+  padding: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-nav {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .nav-tabs {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .nav-tab {
+    flex: 1;
+    max-width: 150px;
+  }
+}
