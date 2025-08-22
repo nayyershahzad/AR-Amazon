@@ -9,130 +9,152 @@ DebtWise is an AI-powered debt payoff strategy advisor that combines conversatio
 ## Technology Stack
 
 - **Backend**: Node.js + TypeScript + Express
-- **AI**: Google Agent Development Kit (ADK/Genkit) with Gemini Pro
-- **Database**: PostgreSQL or MongoDB
+- **AI**: Google Agent Development Kit (ADK/Genkit) with Gemini Flash
+- **Database**: PostgreSQL (Prisma ORM)
 - **Banking Integration**: Flink API for secure bank account connectivity
-- **Frontend**: React with TypeScript
+- **Frontend**: React with TypeScript (in `client/` directory)
 - **Real-time**: Socket.io for live updates
 - **Payments**: Stripe for reward payouts
 - **Scheduling**: node-cron for automated payments
+- **Testing**: Jest with ts-jest
+- **Validation**: Zod schemas
 
 ## Development Commands
 
-Based on the project specification, the following commands should be available:
-
 ```bash
-# Project initialization
-genkit init smart-debt-advisor
-npm install
-
-# Development server
+# Development (runs both backend and frontend concurrently)
 npm run dev
 
+# Backend only
+npm run dev:backend
+
+# Frontend only (from root)
+npm run dev:frontend
+
 # Build
-npm run build
+npm run build                # Build both backend and frontend
+npm run build:backend        # Backend only
+npm run build:frontend       # Frontend only
+
+# Start production server
+npm start
 
 # Testing
-npm test
+npm test                     # Run all tests
+npm run test:watch          # Run tests in watch mode
+npm run test:coverage       # Run tests with coverage
 
-# Linting and type checking
-npm run lint
-npm run typecheck
+# Code quality
+npm run lint                # ESLint
+npm run typecheck          # TypeScript checking
+
+# Database (Prisma)
+npm run db:migrate         # Run database migrations
+npm run db:generate        # Generate Prisma client
+
+# Google Genkit
+npm run genkit:start       # Start Genkit development server
 ```
 
 ## Project Structure
 
 ```
 src/
-├── agent/              # Google ADK flows and AI prompts
-│   ├── masterDebtAgent.ts
-│   ├── rewardEngine.ts
-│   ├── automationEngine.ts
-│   ├── educationEngine.ts
-│   └── socialEngine.ts
-├── types/              # TypeScript interfaces and data models
-│   ├── debt.ts
-│   ├── user.ts
-│   └── rewards.ts
-├── services/           # External API integrations
-│   ├── flinkIntegration.ts
-│   ├── stripeService.ts
-│   └── paymentScheduler.ts
-├── utils/              # Helper functions and calculations
-│   ├── debtCalculations.ts
-│   └── behavioralAnalytics.ts
-├── database/           # Database models and migrations
+├── agent/              # Google Genkit flows and AI logic
+│   ├── debtAdvisor.ts  # Main debt analysis flow
+│   └── genkit.config.ts
 ├── handlers/           # Express route handlers
-│   └── enhancedChatHandler.ts
-└── client/             # React frontend components
+│   ├── debtHandler.ts
+│   ├── rewardHandler.ts
+│   └── automationHandler.ts
+├── routes/             # API route definitions
+│   ├── debtRoutes.ts
+│   ├── rewardRoutes.ts
+│   └── [other feature routes]
+├── services/           # Business logic and external integrations
+│   ├── socialService.ts
+│   └── [other services]
+├── types/              # TypeScript interfaces
+│   ├── debt.ts         # Core debt and user types
+│   └── [feature-specific types]
+├── test/               # Test files
+│   ├── debtAnalysis.test.ts
+│   ├── setup.ts
+│   └── testData.ts
+└── server.ts           # Main Express server with Socket.io
+client/                 # React frontend (separate package)
+├── src/
+│   └── components/     # React components for each feature
+│       ├── DebtAnalyzer.tsx
+│       ├── RewardDashboard.tsx
+│       └── [other dashboards]
+└── package.json
 ```
 
 ## Core Architecture
 
 ### AI Agent System
-The application uses Google ADK (Genkit) flows for conversational AI:
-- **Master Debt Agent**: Primary intelligence for debt analysis and strategy
-- **Reward Engine**: Gamification and points calculation
-- **Automation Engine**: Smart payment scheduling and optimization
-- **Education Engine**: Personalized financial learning modules
-- **Social Engine**: Community features and peer engagement
+The application uses Google Genkit flows for conversational AI:
+- **Debt Analysis Flow** (`debtAdvisor.ts`): Primary intelligence for debt analysis using Gemini Flash
+- Avalanche and Snowball strategy calculations with AI-powered personalization
+- Zod schemas for input/output validation
 
-### Banking Integration
-Secure connectivity through Flink API:
-- Account linking and verification
-- Transaction analysis for cash flow patterns
-- Automated payment execution
-- Real-time balance monitoring
-
-### Psychology-Based Features
-- Behavioral pattern analysis
-- Personalized motivation strategies
-- Customized nudges based on user psychology profile
-- Reward optimization for different personality types
+### Server Architecture
+- **Express.js** server with TypeScript
+- **Socket.io** for real-time features (user rooms, notifications)
+- Modular route structure with handlers for business logic
+- CORS enabled for frontend integration
+- Health check endpoint at `/health`
 
 ### Data Models
-Key interfaces include:
-- `SmartDebt`: Enhanced debt with automation and psychology features
-- `DebtPsychology`: User behavioral patterns and preferences
-- `RewardSystem`: Points, achievements, and gamification tracking
+Core TypeScript interfaces in `src/types/debt.ts`:
+- `UserProfile`: User financial information
+- `Debt`: Individual debt entries
+- `SmartDebt`: Extended debt with psychology and automation features
+- `PayoffStrategy`: Different debt payoff approaches
+- `RewardSystem`: Gamification and points tracking
 - `BehavioralNudge`: Personalized motivational messages
 
-## Development Approach
+### AI Flow Pattern
+Genkit flows use Zod schemas for validation:
+```typescript
+// Input validation
+const DebtAnalysisInput = z.object({
+  userProfile: z.object({...}),
+  debts: z.array(...),
+  availableAmount: z.number()
+});
 
-This project is designed for solo development with Claude Code:
-
-1. **Incremental Development**: Build features one at a time
-2. **Test-Driven**: Implement comprehensive testing for each component
-3. **Modular Architecture**: Clear separation between AI, database, and UI layers
-4. **Progressive Enhancement**: Start with core features, add complexity gradually
+// AI-powered analysis with Gemini Flash
+const llmResponse = await generate({
+  model: gemini15Flash,
+  prompt: `Financial advisor prompt...`
+});
+```
 
 ## Environment Variables
 
-Required environment variables:
-```env
-GOOGLE_GENAI_API_KEY=your_api_key_here
-PROJECT_ID=your_gcp_project_id
-FLINK_CLIENT_ID=your_flink_client_id
-FLINK_SECRET=your_flink_secret
-STRIPE_SECRET_KEY=your_stripe_key
-DATABASE_URL=your_database_url
-JWT_SECRET=your_jwt_secret
-```
+See `.env.example` for all required environment variables:
+- `GOOGLE_GENAI_API_KEY`: Google AI API key for Genkit
+- `DATABASE_URL`: PostgreSQL connection string
+- `STRIPE_SECRET_KEY`: Stripe integration
+- `FLINK_CLIENT_ID` & `FLINK_SECRET`: Banking API
+- `JWT_SECRET`: Authentication
+- `PORT`: Server port (default: 3001)
 
-## Key Implementation Notes
+## Path Aliases
 
-- Use Google ADK's `defineFlow` and `definePrompt` for AI interactions
-- Implement real-time features using Socket.io for user engagement
-- Follow security best practices for financial data handling
-- Ensure all payment automation includes user confirmation workflows
-- Implement comprehensive error handling for banking API integrations
-- Use TypeScript throughout for type safety
-- Prioritize mobile-responsive design for accessibility
+TypeScript paths configured in `tsconfig.json`:
+- `@/*` → `src/*`
+- `@/types/*` → `src/types/*`
+- `@/utils/*` → `src/utils/*`
+- `@/services/*` → `src/services/*`
 
-## Testing Strategy
+## Testing Configuration
 
-- Unit tests for calculation utilities and core business logic
-- Integration tests for banking API connections
-- End-to-end tests for critical user workflows
-- AI flow testing for conversational quality
-- Security testing for financial data protection
+Jest setup with:
+- `ts-jest` for TypeScript support
+- Test files: `**/*.test.ts` or `**/*.spec.ts`
+- Setup file: `src/test/setup.ts`
+- Coverage reporting enabled
+- 30-second test timeout for async operations
