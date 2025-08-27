@@ -26,8 +26,8 @@ In your Vercel project dashboard, go to "Settings" > "Environment Variables" and
 ### Required Variables:
 ```
 NODE_ENV = production
-GOOGLE_GENAI_API_KEY = AIzaSyDA9m4mrCyb_wppn9hKQCLIyVMj_d2ldI0
-PROJECT_ID = llmmunshi
+GOOGLE_GENAI_API_KEY = your_google_ai_api_key_here
+PROJECT_ID = your_project_id_here
 DATABASE_URL = your_neon_database_connection_string
 JWT_SECRET = your_secure_jwt_secret_here
 LOG_LEVEL = info
