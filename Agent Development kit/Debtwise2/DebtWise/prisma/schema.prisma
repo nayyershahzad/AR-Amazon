@@ -1,0 +1,356 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String
+  monthlyIncome   Float
+  monthlyExpenses Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Google OAuth fields
+  googleId        String?  @unique
+  picture         String?
+  verified        Boolean  @default(false)
+
+  // Additional profile fields
+  riskTolerance   String?  @default("moderate") // 'conservative' | 'moderate' | 'aggressive'
+
+  // Strategy Selection
+  selectedStrategy String? // 'avalanche' | 'snowball' | 'custom'
+  strategyStartDate DateTime?
+  strategyAnalysisId String? // Reference to the analysis that generated the strategy
+
+  // Relations
+  debts              Debt[]
+  incomeStreams      IncomeStream[]
+  expenseCategories  ExpenseCategory[]
+  financialGoals     FinancialGoal[]
+  analysisResults    AnalysisResult[]
+  achievements       Achievement[]
+  rewardSystem       RewardSystem?
+  socialFeatures     UserSocialFeature[]
+  educationProgress  UserEducationProgress[]
+  strategyProgress   StrategyProgress?
+
+  @@map("users")
+}
+
+model IncomeStream {
+  id          String   @id @default(cuid())
+  userId      String
+  source      String
+  amount      Float
+  description String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("income_streams")
+}
+
+model ExpenseCategory {
+  id          String   @id @default(cuid())
+  userId      String
+  category    String
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expense_categories")
+}
+
+model FinancialGoal {
+  id           String    @id @default(cuid())
+  userId       String
+  category     String
+  description  String
+  targetAmount Float?
+  targetDate   DateTime?
+  priority     String    @default("medium") // 'low' | 'medium' | 'high'
+  notes        String?
+  completed    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("financial_goals")
+}
+
+model AnalysisResult {
+  id              String   @id @default(cuid())
+  userId          String
+  inputDataHash   String   // Hash of input data to detect changes
+  aiAnalysis      Json     // Full AI response JSON
+  strategies      Json     // Calculated strategies (avalanche, snowball)
+  totalInterestSaved Float?
+  recommendedStrategy String?
+  monthsToPayoff  Int?
+  isLatest        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("analysis_results")
+}
+
+model Debt {
+  id             String  @id @default(cuid())
+  userId         String
+  name           String
+  originalBalance Float?   // Original debt amount - never changes
+  balance        Float    // Current remaining balance - updates with payments
+  interestRate   Float
+  minimumPayment Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Smart Debt Features
+  automationEnabled Boolean @default(false)
+  rewardPoints      Int     @default(0)
+
+  // Psychology Profile (stored as JSON)
+  spendingTriggers     String[] // Array of trigger strings
+  motivationType       String   @default("milestone") // 'visual' | 'social' | 'milestone' | 'competitive'
+  riskTolerance        String   @default("moderate")  // 'conservative' | 'moderate' | 'aggressive'
+  preferredRewardType  String   @default("points")    // 'cash' | 'points' | 'achievements' | 'social_recognition'
+
+  // Social Settings
+  socialSharingEnabled  Boolean @default(false)
+  shareProgress         Boolean @default(false)
+  shareMilestones       Boolean @default(false)
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentRecords  PaymentRecord[]
+  milestones      Milestone[]
+  plannedPayments PlannedPayment[]
+
+  @@map("debts")
+}
+
+model PaymentRecord {
+  id                  String   @id @default(cuid())
+  debtId              String
+  amount              Float
+  date                DateTime @default(now())
+  dueDate             DateTime? // When this payment was supposed to be made
+  type                String   // 'manual' | 'automated'
+  status              String   // 'completed' | 'missed' | 'extra' | 'skipped'
+  plannedAmount       Float?   // What was planned vs actual amount
+  notes               String?  // User notes about the payment
+  rewardPointsEarned  Int      @default(0)
+  isStrategyPayment   Boolean  @default(false) // Whether this follows the selected strategy
+
+  // Relations
+  debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("payment_records")
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  debtId      String
+  type        String    // 'balance_reduction' | 'payment_streak' | 'total_paid'
+  target      Float
+  current     Float     @default(0)
+  reward      Float
+  achieved    Boolean   @default(false)
+  achievedAt  DateTime?
+
+  // Relations
+  debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("milestones")
+}
+
+model Achievement {
+  id             String   @id @default(cuid())
+  userId         String
+  type           String
+  title          String
+  description    String
+  pointsAwarded  Int
+  unlockedAt     DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("achievements")
+}
+
+model RewardSystem {
+  id                     String @id @default(cuid())
+  userId                 String @unique
+  totalPoints            Int    @default(0)
+  cashEarned             Float  @default(0)
+  paymentStreak          Int    @default(0)
+  savingsStreak          Int    @default(0)
+  level                  Int    @default(1)
+  nextLevelRequirement   Int    @default(100)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reward_systems")
+}
+
+model BehavioralNudge {
+  id           String @id @default(cuid())
+  type         String // 'spending_alert' | 'payment_reminder' | 'motivation' | 'education'
+  trigger      String
+  message      String
+  rewardPoints Int    @default(0)
+  frequency    String // 'daily' | 'weekly' | 'monthly' | 'event-based'
+  active       Boolean @default(true)
+
+  @@map("behavioral_nudges")
+}
+
+model SocialFeature {
+  id           String @id @default(cuid())
+  type         String // 'challenge' | 'leaderboard' | 'peer_support'
+  title        String
+  description  String
+  participants Int    @default(0)
+  reward       Float  @default(0)
+  active       Boolean @default(true)
+  startDate    DateTime @default(now())
+  endDate      DateTime?
+
+  // Relations
+  userParticipants UserSocialFeature[]
+
+  @@map("social_features")
+}
+
+model UserSocialFeature {
+  id              String @id @default(cuid())
+  userId          String
+  socialFeatureId String
+  joinedAt        DateTime @default(now())
+  progress        Float    @default(0)
+  completed       Boolean  @default(false)
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  socialFeature SocialFeature @relation(fields: [socialFeatureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, socialFeatureId])
+  @@map("user_social_features")
+}
+
+model EducationModule {
+  id                    String @id @default(cuid())
+  title                 String
+  description           String
+  duration              Int    // in minutes
+  pointsReward          Int    @default(0)
+  prerequisiteModules   String[] // Array of module IDs
+  active                Boolean @default(true)
+  createdAt             DateTime @default(now())
+
+  // Relations
+  userProgress UserEducationProgress[]
+
+  @@map("education_modules")
+}
+
+model UserEducationProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  moduleId  String
+  completed Boolean  @default(false)
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+
+  // Relations
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module EducationModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@map("user_education_progress")
+}
+
+model CreditLineOffer {
+  id                String   @id @default(cuid())
+  provider          String
+  amount            Float
+  apr               Float
+  terms             String[] // Array of term strings
+  eligibilityScore  Float
+  projectedSavings  Float
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  @@map("credit_line_offers")
+}
+
+model StrategyProgress {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  strategyType          String   // 'avalanche' | 'snowball' | 'custom'
+  originalTotalDebt     Float    // Starting total debt amount
+  currentTotalDebt      Float    // Current remaining debt
+  originalMonthsToPayoff Int     // Planned months to payoff
+  currentMonthsRemaining Int?    // Estimated months remaining based on progress
+  totalPaid             Float    @default(0)
+  totalInterestPaid     Float    @default(0)
+  totalInterestSaved    Float    @default(0) // Saved vs minimum payments
+  onTrack               Boolean  @default(true) // Whether on track with original plan
+  completedPayments     Int      @default(0)
+  missedPayments        Int      @default(0)
+  extraPayments         Int      @default(0)
+  skippedPayments       Int      @default(0)
+  lastPaymentDate       DateTime?
+  nextPaymentDue        DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("strategy_progress")
+}
+
+model PlannedPayment {
+  id              String   @id @default(cuid())
+  userId          String
+  debtId          String
+  monthNumber     Int      // Month 1, 2, 3... in the strategy
+  dueDate         DateTime
+  plannedAmount   Float
+  debtName        String
+  remainingBalance Float   // Expected balance after this payment
+  isPriority      Boolean  @default(false) // Whether this is the priority debt payment
+  status          String   @default("pending") // 'pending' | 'completed' | 'missed' | 'skipped'
+  actualPaymentId String?  // Link to actual payment record
+  createdAt       DateTime @default(now())
+
+  // Relations
+  debt Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("planned_payments")
+}

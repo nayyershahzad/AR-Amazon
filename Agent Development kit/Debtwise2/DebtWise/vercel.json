@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["src/**", "package.json", "tsconfig.json"]
+      }
+    },
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/src/server.ts"
+    },
+    {
+      "src": "/health",
+      "dest": "/src/server.ts"
+    },
+    {
+      "src": "/auth/(.*)",
+      "dest": "/src/server.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "src/server.ts": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api|_next/static|_next/image|favicon.ico).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
