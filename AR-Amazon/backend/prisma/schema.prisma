@@ -1,0 +1,48 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  models    Model3D[]
+}
+
+model Model3D {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Input data
+  productName     String?
+  originalImageUrl String
+
+  // Meshy data
+  meshyTaskId     String   @unique
+  meshyStatus     String   @default("pending") // pending, processing, completed, failed
+
+  // Output data
+  modelUrl        String?  // .glb file URL from Meshy
+  thumbnailUrl    String?
+
+  // Metadata
+  creditsUsed     Int      @default(5)
+  errorMessage    String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([meshyStatus])
+}
